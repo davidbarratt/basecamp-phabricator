@@ -1,78 +1,49 @@
 #! /usr/local/bin/node
-require('isomorphic-fetch');
-const { Map } = require('immutable');
-const { getProjects } = require('../src/projects.js');
+const mysql = require('mysql2/promise');
+const { join } = require('path');
+const dotenv = require('dotenv');
+const getProject = require('../src/project');
+const getUsers = require('../src/users');
+const getColumns = require('../src/columns');
+const getMilestones = require('../src/milestones');
+const getTags = require('../src/tags');
+const getStories = require('../src/stories');
+const getEpics = require('../src/epics');
 
-getProjects().then(projects => {
-  console.log(projects.toJS());
-})
+dotenv.config();
 
+const data = require(join(process.cwd(), process.env.TAIGA_EXPORT));
+const keys = new Map(Object.entries(JSON.parse(process.env.USER_MAP)));
 
-// // Authenticate into Taiga
-// fetch(`${process.env.TAIGA_URL}/api/v1/auth`, {
-//   method: 'POST',
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-//   body: JSON.stringify({
-//     type: 'normal',
-//     username: process.env.TAIGA_USERNAME,
-//     password: process.env.TAIGA_PASSWORD,
-//   }),
-// }).then(response => response.json()).then((data) => {
-//   const users = new Map([
-//     [
-//       data.id,
-//       data
-//     ]
-//   ]);
-//
-//   const headers = {
-//     'Content-Type': 'application/json',
-//     Authorization: `Bearer ${data.auth_token}`
-//   };
-//
-//   // Create the state object.
-//   return new Map({
-//     taiga: ( new Map() ).set('users', users).set('headers', headers),
-//   });
-// }).then((state) => {
-//   const taiga = state.get('taiga');
-//
-//   // Projects.
-//   return fetch(`${process.env.TAIGA_URL}/api/v1/projects?member=${taiga.get('users').first().id}`, {
-//     headers: taiga.get('headers'),
-//   }).then(response => response.json()).then(data => {
-//     const projects = new Map(
-//       data.map(project => (
-//         [
-//           project.id,
-//           project,
-//         ]
-//       ))
-//     );
-//
-//     return state.setIn(['taiga', 'projects'], projects)
-//   });
-// }).then(state => {
-//   const taiga = state.get('taiga');
-//
-//   // All users.
-//   return Promise.all(taiga.get('projects').map(project => (
-//     fetch(`${process.env.TAIGA_URL}/api/v1/users?project=${project.id}`, {
-//       headers: taiga.get('headers')
-//     })
-//   )).toArray()).then(responses =>
-//     Promise.all(responses.map(response => response.json()))
-//   ).then(data => {
-//     const users = data.reduce((map, set) => {
-//       return set.reduce((m, u) => {
-//         return m.set(u.id, u);
-//       }, map);
-//     }, new Map() );
-//
-//     return state.setIn(['taiga', 'users'], users);
-//   })
-// }).then(state => {
-//   // @TODO Push what we have to Phabricator and build a map?
-// })
+const main = async () => {
+  // Ensure a default API key.
+  if ( !keys.has( 'default' ) ) {
+    throw new Error('No default API key provided');
+  }
+
+  const db = await mysql.createConnection({
+    host: process.env.MYSQL_HOST,
+    port: process.env.MYSQL_PORT,
+    user: process.env.MYSQL_USER,
+    password:  process.env.MYSQL_PASSWORD,
+  });
+
+  const [users, tags] = await Promise.all([
+    getUsers(keys),
+    getTags(keys, data),
+  ]);
+  const project = await getProject(db, keys, users, data);
+  const [columns, milestones] = await Promise.all([
+    getColumns(db, project, data),
+    getMilestones(db, keys, project, data),
+  ]);
+
+  const stories = await getStories(db, keys, users, project, columns, milestones, tags, data);
+
+  await getEpics(db, keys, users, project, columns, tags, stories, data);
+
+  process.exit(0);
+  return 0;
+};
+
+main();

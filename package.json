@@ -2,7 +2,10 @@
   "name": "taiga-phabricator",
   "license": "GPL-3.0+",
   "dependencies": {
-    "immutable": "^3.8.2",
-    "isomorphic-fetch": "^2.2.1"
+    "dotenv": "^6.1.0",
+    "luxon": "^1.8.3",
+    "mysql2": "^1.6.4",
+    "node-fetch": "^2.3.0",
+    "phid": "^1.0.0"
   }
 }

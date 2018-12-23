@@ -1,10 +1,41 @@
 version: '3'
 services:
-  migrate:
-    image: node:8
-    env_file:
-      - .env
-    command: "tail -f /dev/null"
-    working_dir: /app
+  phabricator:
+    image: phabricator/phabricator
+    ports:
+      - 8888:80
+    links:
+      - db
+      - smtp
     volumes:
-      - ./:/app:cached
+       - config:/var/www/phabricator/conf
+  daemon:
+    image: phabricator/daemon
+    links:
+      - db
+      - smtp
+    volumes:
+       - config:/var/www/phabricator/conf
+  db:
+    image: mariadb
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    volumes:
+      - database:/var/lib/mysql
+  smtp:
+    image: sj26/mailcatcher
+    ports:
+      - 1080:1080
+  # migrate:
+  #   image: node:10
+  #   env_file:
+  #     - .env
+  #   command: "tail -f /dev/null"
+  #   working_dir: /app
+  #   volumes:
+  #     - ./:/app:cached
+volumes:
+  config:
+  database:
