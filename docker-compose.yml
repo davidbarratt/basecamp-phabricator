@@ -9,6 +9,7 @@ services:
       - smtp
     volumes:
        - config:/var/www/phabricator/conf
+       - files:/var/www/files
   daemon:
     image: phabricator/daemon
     links:
@@ -16,8 +17,9 @@ services:
       - smtp
     volumes:
        - config:/var/www/phabricator/conf
+       - files:/var/www/files
   db:
-    image: mariadb
+    image: davidbarratt/phabricator-db
     ports:
       - 3306:3306
     environment:
@@ -38,4 +40,5 @@ services:
   #     - ./:/app:cached
 volumes:
   config:
+  files:
   database:

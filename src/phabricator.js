@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 
-const phabricatorFetch = (method, data, options = {}) => {
+const phabricator = (method, data, options = {}) => {
   const url = new URL(`api/${method}`, process.env.PHABRICATOR_URL).href;
 
   return fetch(url, {
@@ -14,4 +14,4 @@ const phabricatorFetch = (method, data, options = {}) => {
   });
 };
 
-module.exports = phabricatorFetch;
+module.exports = phabricator;

@@ -2,18 +2,11 @@
 const mysql = require('mysql2/promise');
 const { join } = require('path');
 const dotenv = require('dotenv');
-const getProject = require('../src/project');
-const getUsers = require('../src/users');
-const getColumns = require('../src/columns');
-const getMilestones = require('../src/milestones');
-const getTags = require('../src/tags');
-const getStories = require('../src/stories');
-const getEpics = require('../src/epics');
+const getFiles = require('../src/files');
 
 dotenv.config();
 
-const data = require(join(process.cwd(), process.env.TAIGA_EXPORT));
-const keys = new Map(Object.entries(JSON.parse(process.env.USER_MAP)));
+const keys = new Map(JSON.parse(process.env.USER_MAP));
 
 const main = async () => {
   // Ensure a default API key.
@@ -28,19 +21,7 @@ const main = async () => {
     password:  process.env.MYSQL_PASSWORD,
   });
 
-  const [users, tags] = await Promise.all([
-    getUsers(keys),
-    getTags(keys, data),
-  ]);
-  const project = await getProject(db, keys, users, data);
-  const [columns, milestones] = await Promise.all([
-    getColumns(db, project, data),
-    getMilestones(db, keys, project, data),
-  ]);
-
-  const stories = await getStories(db, keys, users, project, columns, milestones, tags, data);
-
-  await getEpics(db, keys, users, project, columns, tags, stories, data);
+  await getFiles(db, keys);
 
   process.exit(0);
   return 0;
