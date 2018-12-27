@@ -1,11 +1,12 @@
 {
-  "name": "taiga-phabricator",
+  "name": "basecamp-phabricator",
   "license": "GPL-3.0+",
   "dependencies": {
     "dotenv": "^6.1.0",
+    "libtidy": "git+https://github.com/jure/node-libtidy.git#patch-1",
     "luxon": "^1.8.3",
     "mysql2": "^1.6.4",
     "node-fetch": "^2.3.0",
-    "phid": "^1.0.0"
+    "turndown": "^5.0.1"
   }
 }

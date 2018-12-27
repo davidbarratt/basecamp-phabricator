@@ -1,8 +1,8 @@
 #! /usr/local/bin/node
 const mysql = require('mysql2/promise');
-const { join } = require('path');
 const dotenv = require('dotenv');
 const getFiles = require('../src/files');
+const getDocs = require('../src/docs');
 
 dotenv.config();
 
@@ -21,7 +21,10 @@ const main = async () => {
     password:  process.env.MYSQL_PASSWORD,
   });
 
-  await getFiles(db, keys);
+  await Promise.all([
+    getFiles(db, keys),
+    getDocs(db, keys)
+  ]);
 
   process.exit(0);
   return 0;
